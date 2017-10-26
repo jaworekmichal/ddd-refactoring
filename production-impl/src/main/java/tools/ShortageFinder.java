@@ -18,6 +18,9 @@ import static java.util.stream.Collectors.toList;
 
 public class ShortageFinder {
 
+    private ShortageFinder() {
+    }
+
     /**
      * Production at day of expected delivery is quite complex:
      * We are able to produce and deliver just in time at same day
@@ -38,6 +41,27 @@ public class ShortageFinder {
      */
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
+
+        // 1. goal: prepare workspace
+        // create domain package production.shortages
+        // copy ShortageFinder to new package
+        // do not change existing ShortageFinder class
+
+        // 2. goal: cut off dependencies to production-planing internals
+        // get rid of dependency to List<ProductionEntity> productions
+        // introduce *Custom Collection* called ProductionOutputs
+        // with interface getOutput(date)
+        // move initialisation of ProductionOutputs to separate method
+
+        // 3. goal: cut off dependencies to demand-forecasting internals
+        // get rid of dependency to List<DemandEntity> demands
+        // introduce *Custom Collection* called Demands
+        // with interface getDemand(date) -> DailyDemand
+        // introduce *Value Object* called DailyDemand
+        // with interface getLevel -> long
+        //                hasDeliverySchema(deliverySchema) -> true/false
+        // move initialisation of Demands to separate method
+
         List<LocalDate> dates = Stream.iterate(today, date -> date.plusDays(1))
                 .limit(daysAhead)
                 .collect(toList());
@@ -87,7 +111,7 @@ public class ShortageFinder {
                 throw new NotImplementedException();
             }
 
-            if (!(levelOnDelivery >= 0)) {
+            if (levelOnDelivery < 0) {
                 ShortageEntity entity = new ShortageEntity();
                 entity.setRefNo(productRefNo);
                 entity.setFound(LocalDate.now());
@@ -99,8 +123,5 @@ public class ShortageFinder {
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
         return gap;
-    }
-
-    private ShortageFinder() {
     }
 }
